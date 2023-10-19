@@ -91,6 +91,15 @@ public class MyApplicationContext {
                 }
             }
 
+            //beanName的aware回调
+            if (instance instanceof BeanNameAware) {
+                ((BeanNameAware)instance).setBeanName(beanName);
+            }
+            //类的初始化
+            if (instance instanceof InitializeBean) {
+                ((InitializeBean)instance).afterPropertiesSet();
+            }
+
             return instance;
         } catch (InstantiationException e) {
             throw new RuntimeException(e);
