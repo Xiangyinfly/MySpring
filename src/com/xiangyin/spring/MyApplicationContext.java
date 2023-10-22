@@ -10,13 +10,14 @@ import java.io.File;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class MyApplicationContext {
     private Class configClass;
     private ConcurrentHashMap<String,BeanDefinition> beanDefinitionMap = new ConcurrentHashMap<>();
     private ConcurrentHashMap<String,Object> singletonObjects = new ConcurrentHashMap<>();
-
+    private ArrayList<BeanPostProcessor> beanPostProcessors = new ArrayList<>();
     public MyApplicationContext(Class configClass) {
         this.configClass = configClass;
 
@@ -43,6 +44,14 @@ public class MyApplicationContext {
 
 
                             if (clazz.isAnnotationPresent(Component.class)) {
+
+                                //BeanPostProcessor
+                                if (BeanPostProcessor.class.isAssignableFrom(clazz)) {
+                                    BeanPostProcessor instance = (BeanPostProcessor) clazz.newInstance();
+                                    beanPostProcessors.add(instance);
+
+                                }
+
                                 String beanName = clazz.getAnnotation(Component.class).value();
                                 if ("".equals(beanName)) {
                                     beanName = Introspector.decapitalize(clazz.getSimpleName());
@@ -59,7 +68,7 @@ public class MyApplicationContext {
 
                                 beanDefinitionMap.put(beanName,beanDefinition);
                             }
-                        } catch (ClassNotFoundException e) {
+                        } catch (Exception e) {
                             throw new RuntimeException(e);
                         }
                     }
@@ -95,9 +104,20 @@ public class MyApplicationContext {
             if (instance instanceof BeanNameAware) {
                 ((BeanNameAware)instance).setBeanName(beanName);
             }
+
+            //实现BeanPostProcessor方法
+            for (BeanPostProcessor beanPostProcessor : beanPostProcessors) {
+                instance = beanPostProcessor.postProcessorBeforeInitialization(beanName,instance);
+            }
+
             //类的初始化
             if (instance instanceof InitializeBean) {
                 ((InitializeBean)instance).afterPropertiesSet();
+            }
+
+            //实现BeanPostProcessor方法
+            for (BeanPostProcessor beanPostProcessor : beanPostProcessors) {
+                instance = beanPostProcessor.postProcessorAfterInitialization(beanName,instance);
             }
 
             return instance;

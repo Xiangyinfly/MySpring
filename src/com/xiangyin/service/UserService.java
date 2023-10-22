@@ -1,13 +1,14 @@
 package com.xiangyin.service;
 
 import com.xiangyin.spring.BeanNameAware;
+import com.xiangyin.spring.BeanPostProcessor;
 import com.xiangyin.spring.InitializeBean;
 import com.xiangyin.spring.annotation.Autowired;
 import com.xiangyin.spring.annotation.Component;
 import com.xiangyin.spring.annotation.Scope;
 
 @Component("userService")
-public class UserService implements BeanNameAware, InitializeBean {
+public class UserService implements BeanNameAware, InitializeBean,UserInterface {
     @Autowired
     private OrderService orderService;
 
